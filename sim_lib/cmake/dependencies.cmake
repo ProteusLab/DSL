@@ -1,0 +1,6 @@
+CPMAddPackage(
+  NAME elfio
+  GITHUB_REPOSITORY serge1/ELFIO
+  GIT_TAG Release_3.12
+  EXCLUDE_FROM_ALL True
+  SYSTEM True)
