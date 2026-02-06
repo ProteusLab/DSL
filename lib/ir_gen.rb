@@ -15,4 +15,5 @@ yaml_data = YAML.safe_load(
   symbolize_names: true
 )
 
+Dir.mkdir('sim_lib/generated/') unless File.exist?('sim_lib/generated/')
 File.write('sim_lib/generated/IR.yaml', yaml_data.to_yaml)

@@ -69,106 +69,16 @@ module SimGen
         "cpu.m_memory->read<#{Utility::HelperCpp.gen_small_type(dst[:type])}>(#{addr})"
       end
 
-      def generate_code_node(node, operand_map, emitter)
-        case node[:name]
-        when :new_var
-          var_name = node[:oprnds][0][:name]
-          var_type = Utility::HelperCpp.gen_small_type(node[:oprnds][0][:type])
-          emitter.emit_line("#{var_type} #{var_name};")
-        when :let
-          var_name = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          expr_name = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-          expr_name = expr_name.nil? ? node[:oprnds][1][:value] : expr_name
-          emitter.emit_line("#{var_name} = #{expr_name};")
-        when :cast
-          var = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          expr = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-          expr = expr.nil? ? node[:oprnds][1][:value] : expr
-          bitsize_dst = Utility.get_type(node[:oprnds][0][:type]).bitsize
-          bitsize_src = Utility.get_type(node[:oprnds][1][:type]).bitsize
-          cast_type = Utility::HelperCpp.gen_type(node[:oprnds][0][:type])
-          if Utility.get_type(node[:oprnds][0][:type]).typeof == :s && bitsize_src < bitsize_dst
-            emitter.emit_line("#{var} = (static_cast<#{cast_type}>(#{expr}) << #{bitsize_dst - bitsize_src}) >> #{bitsize_dst - bitsize_src};")
-          else
-            emitter.emit_line("#{var} = static_cast<#{cast_type}>(#{expr});")
-          end
-        when :add
-          emit_binary_op(emitter, operand_map, '+', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :sub
-          emit_binary_op(emitter, operand_map, '-', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :shl
-          emit_binary_op(emitter, operand_map, '<<', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :shr
-          emit_binary_op(emitter, operand_map, '>>', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :and
-          emit_binary_op(emitter, operand_map, '&', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :or
-          emit_binary_op(emitter, operand_map, '|', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :xor
-          emit_binary_op(emitter, operand_map, '^', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :lt
-          emit_binary_op(emitter, operand_map, '<', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :gt
-          emit_binary_op(emitter, operand_map, '>', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :le
-          emit_binary_op(emitter, operand_map, '<=', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :ge
-          emit_binary_op(emitter, operand_map, '>=', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :eq
-          emit_binary_op(emitter, operand_map, '==', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :ne
-          emit_binary_op(emitter, operand_map, '!=', node[:oprnds][0], node[:oprnds][1], node[:oprnds][2])
-        when :readReg
-          src = node[:oprnds][1]
-          src_name = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-          expr = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          expr = expr.nil? ? node[:oprnds][0][:value] : expr
-
-          emitter.emit_line("#{expr} = #{cpu_read_reg(src)}<#{Utility::HelperCpp.gen_small_type(src[:type])}>(#{src_name});")
-        when :writeReg
-          dst = node[:oprnds][0]
-          dst_name = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          expr = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-          expr = expr.nil? ? node[:oprnds][1][:value] : expr
-
-          emitter.emit_line("#{cpu_write_reg(dst)}(#{dst_name}, #{expr});")
-        when :select
-          dst = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          cond = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-
-          true_val = operand_map[node[:oprnds][2][:name]] || node[:oprnds][2][:name]
-          false_val = operand_map[node[:oprnds][3][:name]] || node[:oprnds][3][:name]
-
-          emitter.emit_line("#{dst} = #{cond} ? #{true_val} : #{false_val};")
-        when :branch
-          val = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          emitter.emit_line("cpu.setPC(#{val});")
-        when :readMem
-          dst = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          addr = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-          emitter.emit_line("#{dst} = #{cpu_read_mem node[:oprnds][0], addr};")
-        when :writeMem
-          addr = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          val = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-          emitter.emit_line("#{cpu_write_mem addr, val};")
-        when :extract
-          dst = operand_map[node[:oprnds][0][:name]] || node[:oprnds][0][:name]
-          src = operand_map[node[:oprnds][1][:name]] || node[:oprnds][1][:name]
-
-          emitter.emit_line("#{dst} = static_cast<#{Utility::HelperCpp.gen_small_type node[:oprnds][0][:type]}>(#{src} << #{node[:oprnds][3][:value]});")
-        when :sysCall
-          emitter.emit_line('cpu.doExit();')
-        end
-      end
-
       def generate_exec_function(instruction)
         emitter = Utility::GenEmitter.new
         operand_map = map_operands(instruction)
 
         emitter.emit_line("void do#{instruction[:name].to_s.upcase}(CPU &cpu, const Instruction &insn) {")
         emitter.increase_indent
+
+        gen = SemaGen.new(emitter, operand_map)
         instruction[:code][:tree].each do |node|
-          generate_code_node(node, operand_map, emitter)
+          gen.generate_statement(node)
         end
         emitter.decrease_indent
         emitter.emit_line('}')

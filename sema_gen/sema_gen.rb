@@ -25,6 +25,22 @@ class SemaGen
     emitter.to_s
   end
 
+  def cpu_write_reg(dst)
+    "cpu.set#{dst[:regset]}"
+  end
+
+  def cpu_read_reg(dst)
+    "cpu.get#{dst[:regset]}"
+  end
+
+  def cpu_write_mem(addr, val)
+    "cpu.m_memory->write(#{addr}, #{val})"
+  end
+
+  def cpu_read_mem(dst, addr)
+    "cpu.m_memory->read<#{Utility::HelperCpp.gen_small_type(dst[:type])}>(#{addr})"
+  end
+
   def generate_statement(operation)
     case operation[:name]
     when :add
@@ -78,6 +94,45 @@ class SemaGen
       else
         @emitter.emit_line("#{dst} = static_cast<#{cast_type}>(#{src});")
       end
+    when :readReg
+      src = operation[:oprnds][1]
+      src_name = @mapping[operation[:oprnds][1][:name]] || operation[:oprnds][1][:name]
+      expr = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      expr = expr.nil? ? operation[:oprnds][0][:value] : expr
+
+      @emitter.emit_line("#{expr} = #{cpu_read_reg(src)}<#{Utility::HelperCpp.gen_small_type(src[:type])}>(#{src_name});")
+    when :writeReg
+      dst = operation[:oprnds][0]
+      dst_name = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      expr = @mapping[operation[:oprnds][1][:name]] || operation[:oprnds][1][:name]
+      expr = expr.nil? ? operation[:oprnds][1][:value] : expr
+
+      @emitter.emit_line("#{cpu_write_reg(dst)}(#{dst_name}, #{expr});")
+    when :branch
+      val = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      @emitter.emit_line("cpu.setPC(#{val});")
+    when :readMem
+      dst = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      addr = @mapping[operation[:oprnds][1][:name]] || operation[:oprnds][1][:name]
+      @emitter.emit_line("#{dst} = #{cpu_read_mem operation[:oprnds][0], addr};")
+    when :writeMem
+      addr = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      val = @mapping[operation[:oprnds][1][:name]] || operation[:oprnds][1][:name]
+      @emitter.emit_line("#{cpu_write_mem addr, val};")
+    when :extract
+      dst = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      src = @mapping[operation[:oprnds][1][:name]] || operation[:oprnds][1][:name]
+
+      @emitter.emit_line("#{dst} = static_cast<#{Utility::HelperCpp.gen_small_type operation[:oprnds][0][:type]}>(#{src} << #{operation[:oprnds][3][:value]});")
+    when :sysCall
+      @emitter.emit_line('cpu.doExit();')
+    when :select
+      dst = @mapping[operation[:oprnds][0][:name]] || operation[:oprnds][0][:name]
+      cond = @mapping[operation[:oprnds][1][:name]] || operation[:oprnds][1][:name]
+      true_val = @mapping[operation[:oprnds][2][:name]] || operation[:oprnds][2][:name]
+      false_val = @mapping[operation[:oprnds][3][:name]] || operation[:oprnds][3][:name]
+
+      @emitter.emit_line("#{dst} = #{cond} ? #{true_val} : #{false_val};")
     end
   end
 end
