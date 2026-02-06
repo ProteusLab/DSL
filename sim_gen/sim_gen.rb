@@ -12,7 +12,7 @@ require 'sim_gen/Hart/hart'
 require 'yaml'
 
 yaml_data = YAML.load_file('sim_lib/generated/IR.yaml')
-yaml_data[:isa_name] = "RISCV32I"
+yaml_data[:isa_name] = "RISCV"
 
 
 File.write('sim_lib/generated/cpu_state.hh', SimGen::CPUState::Header.generate_cpu_state(yaml_data))

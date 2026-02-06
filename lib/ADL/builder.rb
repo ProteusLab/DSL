@@ -40,10 +40,11 @@ module SimInfra
     end
 
     class InstructionInfo
-        attr_accessor :name, :fields, :frmt, :map, :code, :map_code_blocks, :asm_str, :XLEN
-        def initialize(name)
+        attr_accessor :name, :fields, :frmt, :map, :code, :map_code_blocks, :asm_str, :XLEN, :feature
+        def initialize(name, feature)
             @name = name;
             @map_code_blocks = {}
+            @feature = feature
         end
 
         def to_h
@@ -55,11 +56,12 @@ module SimInfra
                 asm_str: @asm_str,
                 code: @code.to_h,
                 map: @map.to_h,
+                feature: @feature,
             }
         end
 
         def self.from_h(h)
-            info = InstructionInfo.new(h[:name])
+            info = InstructionInfo.new(h[:name], h[:feature])
             info.fields = h[:fields].map { |f| Field.from_h(f) }
             info.frmt = h[:frmt]
             info.XLEN = h[:XLEN]
@@ -74,8 +76,9 @@ module SimInfra
 
     class InstructionInfoBuilder
         include SimInfra
-        def initialize(name) 
-            @info = InstructionInfo.new(name) 
+
+        def initialize(name, feature) 
+            @info = InstructionInfo.new(name, feature) 
             @info.code = Scope.new(nil) 
 
             @@interface_functions.each do |func|
@@ -98,6 +101,7 @@ module SimInfra
 
             @info.map = Scope.new(nil)
         end
+
         def encoding(frmt, fields, *args)
             @info.fields = fields 
             @info.frmt= frmt 
@@ -114,7 +118,9 @@ module SimInfra
     end
 
     def Instruction(name, &block)
-        bldr = InstructionInfoBuilder.new(name)
+        module_name = caller[0].split('\'')[1].split(':')[1][0..-2]
+
+        bldr = InstructionInfoBuilder.new(name, module_name.to_sym)
         bldr.instance_eval &block
         @@instructions << bldr.info
         nil # only for debugging in IRB

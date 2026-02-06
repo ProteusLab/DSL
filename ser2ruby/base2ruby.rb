@@ -73,6 +73,6 @@ end
 require 'yaml'
 
 yaml_data = YAML.load_file('sim_lib/generated/IR.yaml')
-yaml_data[:isa_name] = "RISCV32I"
+yaml_data[:isa_name] = "RISCV"
 
 puts IRHelper.ir2ruby(yaml_data)
