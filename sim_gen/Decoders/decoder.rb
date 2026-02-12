@@ -1,6 +1,6 @@
 require 'Utility/gen_emitter'
 require 'Utility/helper_cpp'
-require 'sema_gen/sema_gen'
+require 'sema_gen/cpp_gen'
 
 module SimGen
     module Decoder
@@ -186,7 +186,7 @@ module SimGen
             def generate_mapping_body(insn)
                 emitter = Utility::GenEmitter.new
                 operand_map = map_operands(insn)
-                gen = SemaGen.new(emitter, operand_map)
+                gen = SemaGen::CppGenerator.new(emitter, operand_map)
                 for node in insn[:map][:tree]
                     gen.generate_statement(node)
                 end
@@ -301,7 +301,7 @@ constexpr T slice(T word) {
 
 namespace prot::decoder {
 using namespace isa;
-std::optional<Instruction> decode(const uint32_t raw_insn) {
+std::optional<Instruction> decode(const isa::Word raw_insn) {
   Instruction insn{};
 #{decoder_impl}
   return {}; // No matching instruction found

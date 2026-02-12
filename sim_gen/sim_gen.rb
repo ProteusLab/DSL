@@ -8,6 +8,7 @@ require 'sim_gen/ExecEngines/naive_interpreter'
 require 'sim_gen/ExecEngines/base_exec_engine'
 require 'sim_gen/MemoryModels/memory'
 require 'sim_gen/Hart/hart'
+require 'sim_gen/ExecEngines/llvm_jit'
 
 require 'yaml'
 
@@ -27,14 +28,3 @@ File.write('sim_lib/generated/memory.hh', SimGen::Memory::Header.generate_memory
 File.write('sim_lib/generated/memory.cc', SimGen::Memory::TranslationUnit.generate_memory(yaml_data))
 File.write('sim_lib/generated/hart.hh', SimGen::Hart::Header.generate_hart(yaml_data))
 File.write('sim_lib/generated/hart.cc', SimGen::Hart::TranslationUnit.generate_hart(yaml_data))
-
-puts SimGen::ISA::Helper.generate_instruction_struct(yaml_data)
-
-# require 'yaml'
-# data = YAML.safe_load(
-#   SimInfra.state,
-#   permitted_classes: [Symbol],
-#   symbolize_names: true
-# )
-
-# puts(SimInfra.generate_exec_handler(data))

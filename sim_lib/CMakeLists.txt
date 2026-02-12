@@ -12,6 +12,6 @@ include(CPM)
 include(dependencies)
 
 
-add_executable(sim sim.cc generated/base_exec_engine.cc generated/naive_interpreter.cc generated/memory.cc generated/hart.cc generated/decoder.cc elf_loader.cc)
+add_executable(sim sim.cc generated/base_exec_engine.cc generated/naive_interpreter.cc generated/memory.cc generated/hart.cc generated/decoder.cc elf_loader.cc base_jit.cc)
 target_link_libraries(sim elfio::elfio)
 target_include_directories(sim PUBLIC generated .)
