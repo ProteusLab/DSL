@@ -12,19 +12,18 @@ require 'sim_gen/ExecEngines/llvm_jit'
 
 require 'yaml'
 
-yaml_data = YAML.load_file('sim_lib/generated/IR.yaml')
+yaml_data = YAML.load_file(ARGV[0])
 yaml_data[:isa_name] = "RISCV"
 
-
-File.write('sim_lib/generated/cpu_state.hh', SimGen::CPUState::Header.generate_cpu_state(yaml_data))
-File.write('sim_lib/generated/base_exec_engine.hh', SimGen::BaseExecEngine::Header.generate_base_exec_engine(yaml_data))
-File.write('sim_lib/generated/base_exec_engine.cc', SimGen::BaseExecEngine::TranslationUnit.generate_base_exec_engine(yaml_data))
-File.write('sim_lib/generated/naive_interpreter.hh', SimGen::NaiveInterpreter::Header.generate_naive_interpreter(yaml_data))
-File.write('sim_lib/generated/naive_interpreter.cc', SimGen::NaiveInterpreter::TranslationUnit.generate_naive_interpreter(yaml_data))
-File.write('sim_lib/generated/decoder.hh', SimGen::Decoder::Header.generate_decoder(yaml_data))
-File.write('sim_lib/generated/decoder.cc', SimGen::Decoder::TranslationUnit.generate_decoder(yaml_data))
-File.write('sim_lib/generated/isa.hh', SimGen::ISA::Header.generate_isa_header(yaml_data))
-File.write('sim_lib/generated/memory.hh', SimGen::Memory::Header.generate_memory(yaml_data))
-File.write('sim_lib/generated/memory.cc', SimGen::Memory::TranslationUnit.generate_memory(yaml_data))
-File.write('sim_lib/generated/hart.hh', SimGen::Hart::Header.generate_hart(yaml_data))
-File.write('sim_lib/generated/hart.cc', SimGen::Hart::TranslationUnit.generate_hart(yaml_data))
+File.write('cpu_state.hh', SimGen::CPUState::Header.generate_cpu_state(yaml_data))
+File.write('base_exec_engine.hh', SimGen::BaseExecEngine::Header.generate_base_exec_engine(yaml_data))
+File.write('base_exec_engine.cc', SimGen::BaseExecEngine::TranslationUnit.generate_base_exec_engine(yaml_data))
+File.write('naive_interpreter.hh', SimGen::NaiveInterpreter::Header.generate_naive_interpreter(yaml_data))
+File.write('naive_interpreter.cc', SimGen::NaiveInterpreter::TranslationUnit.generate_naive_interpreter(yaml_data))
+File.write('decoder.hh', SimGen::Decoder::Header.generate_decoder(yaml_data))
+File.write('decoder.cc', SimGen::Decoder::TranslationUnit.generate_decoder(yaml_data))
+File.write('isa.hh', SimGen::ISA::Header.generate_isa_header(yaml_data))
+File.write('memory.hh', SimGen::Memory::Header.generate_memory(yaml_data))
+File.write('memory.cc', SimGen::Memory::TranslationUnit.generate_memory(yaml_data))
+File.write('hart.hh', SimGen::Hart::Header.generate_hart(yaml_data))
+File.write('hart.cc', SimGen::Hart::TranslationUnit.generate_hart(yaml_data))
