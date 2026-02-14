@@ -55,6 +55,34 @@ module SimGen
                     }
                 }
             end
+
+            def is_terminator_instruction(insn)
+                insn[:code][:tree].each { |node|
+                    return true if node[:name] == :branch
+                }
+                false
+            end
+
+            def generate_is_terminator_function(input_ir)
+                emitter = Utility::GenEmitter.new
+                emitter.emit_line("inline constexpr bool isTerminator(Opcode opc) {")
+                emitter.increase_indent
+                emitter.emit_line("switch (opc) {")
+                emitter.increase_indent
+                input_ir[:instructions].each do |insn|
+                    emitter.emit_line("case Opcode::k#{insn[:name].to_s.upcase}:") if is_terminator_instruction(insn)
+                end
+                emitter.emit_line("return true;")
+                emitter.decrease_indent
+                emitter.emit_line("default:")
+                emitter.increase_indent
+                emitter.emit_line("return false;")
+                emitter.decrease_indent
+                emitter.emit_line("}")
+                emitter.decrease_indent
+                emitter.emit_line("}")
+                emitter
+            end
         end
     end
 end
@@ -69,6 +97,8 @@ module SimGen
                 type_str = Utility::HelperCpp::gen_type type
 
                 instruction_struct = Helper.generate_instruction_struct(input_ir)
+                is_terminator_function = Helper.generate_is_terminator_function(input_ir)
+                max_xlen = SimGen::Helper::find_max_xlen(input_ir[:regfiles])
 "#ifndef GENERATED_#{input_ir[:isa_name].upcase}_ISA_HH_INCLUDED
 #define GENERATED_#{input_ir[:isa_name].upcase}_ISA_HH_INCLUDED
 
@@ -76,12 +106,22 @@ module SimGen
 
 namespace prot::isa {
 using Addr = #{type_str};
+using Word = uint#{max_xlen}_t;
 
 enum class Opcode : uint32_t {
 #{input_ir[:instructions].map { |insn| "  k#{insn[:name].to_s.upcase}," }.join("\n")}
 };
 
 #{instruction_struct.to_s}
+
+#{is_terminator_function.to_s}
+
+inline constexpr std::size_t getILen(Opcode opc) {
+  switch (opc) {
+    #{input_ir[:instructions].map { |insn| "case Opcode::k#{insn[:name].to_s.upcase}: return #{insn[:XLEN]};" }.join("\n    ")}
+    default: return 4;
+  }
+}
 
 } // namespace prot::isa
 

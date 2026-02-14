@@ -5,13 +5,6 @@ module SimInfra
     # @@instructions -array of instruction description
     # shows result of our tests in interactive Ruby (IRB) or standalone
     def self.serialize(msg= nil)
-        return @@instructions if Object.const_defined?(:IRB)
-        require 'pp'
-        # puts "\n\n\n#{'*' * 100}\n#{' ' * 30}#{msg}\n\n\n"
-        # PP.pp @@regfiles
-        # PP.pp @@instructions
-        # PP.pp @@instructions.size
-
         require 'yaml'
         yaml_data = YAML.dump(
           {
@@ -19,19 +12,7 @@ module SimInfra
             instructions: @@instructions.map(&:to_h),
           }
         )
-
-        File.write("IR.yaml", yaml_data)
-
-        require 'json'
-
-
-        json_data = JSON.pretty_generate(
-            {
-                regfiles: @@regfiles.map(&:to_h),
-                instructions: @@instructions.map(&:to_h),
-            }
-        )
-        File.write("IR.json", json_data)
+        yaml_data
     end
 
     def self.state

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'Utility/gen_emitter'
+require 'lib/Utility/gen_emitter'
 require 'Utility/helper_cpp'
 
 # SimGen - simulation code generator

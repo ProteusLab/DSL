@@ -1,3 +1,5 @@
+require "sim_gen/Utility/sim_utility"
+
 module SimGen
   module BaseExecEngine
     module Header
@@ -31,18 +33,8 @@ struct ExecEngine {
     module TranslationUnit
       module_function
 
-      def find_max_xlen(regfiles)
-        max_xlen = 0
-        regfiles.each do |regfile|
-          regfile[:regs].each do |reg|
-            max_xlen = [max_xlen, reg[:size]].max
-          end
-        end
-        max_xlen
-      end
-
       def generate_base_exec_engine(input_ir)
-        max_xlen = find_max_xlen(input_ir[:regfiles])
+        max_xlen = SimGen::Helper::find_max_xlen(input_ir[:regfiles])
 
 "#include \"base_exec_engine.hh\"
 #include \"memory.hh\"

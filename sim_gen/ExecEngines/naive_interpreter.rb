@@ -34,7 +34,7 @@ module SimGen
       def map_operands(insn)
         operands = {}
         cnt = 0
-        for node in insn[:map][:tree]
+        insn[:map][:tree].each do |node|
           if node[:name] == :new_var && !node[:attrs].nil? && node[:attrs].include?(:op)
             operands[node[:oprnds][0][:name]] = "insn.operand#{cnt}"
             cnt += 1
@@ -42,15 +42,6 @@ module SimGen
         end
         operands[:pc] = 'cpu.getPC()'
         operands
-      end
-
-      def emit_binary_op(emitter, operand_map, op, dest, src1, src2)
-        var = operand_map[dest[:name]] || dest[:name]
-        expr1 = operand_map[src1[:name]] || src1[:name]
-        expr2 = operand_map[src2[:name]] || src2[:name]
-        expr1 = expr1.nil? ? src1[:value] : expr1
-        expr2 = expr2.nil? ? src2[:value] : expr2
-        emitter.emit_line("#{var} = #{expr1} #{op} #{expr2};")
       end
 
       def cpu_write_reg(dst)
@@ -76,7 +67,7 @@ module SimGen
         emitter.emit_line("void do#{instruction[:name].to_s.upcase}(CPU &cpu, const Instruction &insn) {")
         emitter.increase_indent
 
-        gen = SemaGen.new(emitter, operand_map)
+        gen = SemaGen::CppGenerator.new(emitter, operand_map)
         instruction[:code][:tree].each do |node|
           gen.generate_statement(node)
         end
@@ -140,13 +131,6 @@ namespace {
 #{is_branch_function}
 
 #{exec_functions}
-
-size_t getILen(Opcode opc) {
-  switch (opc) {
-    #{input_ir[:instructions].map { |insn| "case Opcode::k#{insn[:name].to_s.upcase}: return #{insn[:XLEN]};" }.join("\n    ")}
-    default: return 4;
-  }
-}
 
 template <typename T>
 constexpr auto toUnderlying(T val)
