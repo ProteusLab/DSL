@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  formatting-check:
+    name: Formatting check
+    runs-on: [self-hosted, ubuntu-latest]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check line breaks
+        run: |
+          ci-extra/check-lines.sh
+
+      - name: Run clang-format style check
+
+        uses: jidicula/clang-format-action@v4.14.0
+        with:
+          clang-format-version: '18'
+          check-path: '.'
+
+  build:
+    needs: formatting-check
+    name: Build
+    runs-on: [self-hosted, ubuntu-latest]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - { os: Linux, compiler-id: Clang, runner-label: clang-19 }
+        build-type:
+          - Release
+          - Debug
+          - RelWithDebInfo
+          - Sanitized
+          - SanitizedDebug
+
+    env:
+      CMAKE_PRESET: "Default-${{ matrix.build-type }}"
+
+    timeout-minutes: 40
+
+    steps:
+      - name: Build
+        run: |
+          ci-extra/build.sh "$CMAKE_PRESET"
+          
+
+
